@@ -1,39 +1,34 @@
+//SETUP SERVER
 const express = require('express');
 require('dotenv').config();
-
 const app = express();
 
-const mongoose = require('mongoose');
-mongoose.set('strictQuery', false);
+// DB CONNECTION
+const mongooseConnection = require('./services/mongooseConnection');
+app.use(mongooseConnection);
 
-async function main() {
-  await mongoose
-    .connect(process.env.MONGODB_URI)
-    .then(console.log('Succesful connection to mongodb'));
-}
+// PARSERS
+app.use(express.json());
+const bodyParser = require('body-parser');
+app.use(bodyParser.urlencoded({ extended: false }));
 
-main().catch((err) => console.log(err));
+// ROUTES
+const signupRouter = require('./routes/signup');
+const todosRouter = require('./routes/todos');
+const todoRouter = require('./routes/todo');
 
-app.get('/', (req, res) => {
-  return res.send('Received a GET HTTP method');
-});
+app.get('/', (req, res) => res.send('todoAPI'));
+app.use('/signup', signupRouter);
+app.use('/todos', todosRouter);
+app.use('/todo', todoRouter);
 
-app.post('/', (req, res) => {
-  return res.send('Received a POST HTTP method');
-});
+// ERROR HANDLER
+const missingRouteHandler = require('./services/missingRouteHandler');
+const errorHandler = require('./services/errorHandler');
+app.use(missingRouteHandler);
+app.use(errorHandler);
 
-app.put('/', (req, res) => {
-  return res.send('Received a PUT HTTP method');
-});
-
-app.delete('/', (req, res) => {
-  return res.send('Received a DELETE HTTP method');
-});
-
-app.use((err) => {
-  console.log(err);
-});
-
+// START LISTENING
 app.listen(process.env.PORT, () =>
-  console.log(`Example app listening on port ${process.env.PORT}! :)`)
+  console.log(`App listening on port ${process.env.PORT}`)
 );
